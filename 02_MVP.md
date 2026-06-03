@@ -5,7 +5,7 @@
 
 ## Objetivo
 
-Provar que o dispositivo ISU, operando dentro de um coletor real da TRONIK, consegue detectar evento de descarte, medir nível de enchimento, e enviar esses dados pela rede celular para a dashboard com autonomia aceitável em bateria.
+Provar que o dispositivo ISU, operando dentro de um coletor real da TRONIK, consegue detectar evento de descarte, medir nível de enchimento, e enviar esses dados via Wi-Fi para a dashboard com autonomia aceitável em bateria.
 
 Se o MVP funcionar, a Maiara passa a saber remotamente quais coletores precisam de coleta.
 
@@ -13,10 +13,11 @@ Se o MVP funcionar, a Maiara passa a saber remotamente quais coletores precisam 
 
 ## O que precisa funcionar
 
+- Rodar em ESP32 DOIT DevKit V1, configurado no Arduino IDE como ESP32 Dev Module.
 - Ler 3 sensores VL53L0X e converter as distâncias em porcentagem de enchimento.
 - Detectar impacto com MPU6050 e acordar do deep sleep.
 - Acordar também por timer a cada 30 minutos como backup.
-- Enviar pacote HTTP via SIM7000G com nível, bateria, e distâncias brutas.
+- Enviar pacote HTTP via Wi-Fi com nível, bateria, e distâncias brutas.
 - O backend receber o pacote, atualizar o coletor na dashboard, e emitir via WebSocket.
 - Criar notificação automática se nível passar de 80%.
 - Rodar em bateria 18650 por pelo menos alguns dias de teste contínuo.
@@ -51,8 +52,8 @@ SLEEP (default)
                         │
                         ▼
                       SEND
-                      (ligar modem, conectar APN, POST HTTP,
-                       desligar modem)
+                      (conectar Wi-Fi, POST HTTP,
+                       encerrar conexão)
                         │
                         ▼
                      SLEEP
@@ -83,16 +84,16 @@ Se o POST falhar, volta para SLEEP e tenta no próximo ciclo. Sem buffer local n
 ## Plano de montagem e teste (7 dias, quando os componentes chegarem)
 
 Dia 1 — Bancada elétrica básica.
-Conectar LilyGO no computador. Confirmar boot. 1 VL53L0X no I2C, validar leitura. MPU6050 no I2C, validar leitura. Bateria, confirmar funcionamento sem USB.
+Conectar ESP32 DOIT DevKit V1 no computador. No Arduino IDE, selecionar ESP32 Dev Module. Confirmar boot. 1 VL53L0X no I2C (SDA=21, SCL=22), validar leitura. MPU6050 no I2C, validar leitura. Bateria, confirmar funcionamento sem USB.
 
 Dia 2 — Multi-ToF.
-3 sensores com XSHUT nos GPIOs 13/14/15, endereços 0x30/0x31/0x32. Coletar amostras apontando para superfícies variadas. Validar estabilidade.
+3 sensores VL53L0X com XSHUT nos GPIOs 25/26/27, endereços 0x30/0x31/0x32. Coletar amostras apontando para superfícies variadas. Validar estabilidade.
 
 Dia 3 — Deep sleep e wake.
-Ciclo completo: timer wakeup + ext0 wakeup pelo MPU. Medir consumo aproximado. Confirmar que impacto na mesa acorda, vibração leve não.
+Ciclo completo: timer wakeup + ext0 wakeup pelo MPU6050 INT no GPIO33. Medir consumo aproximado. Confirmar que impacto na mesa acorda, vibração leve não.
 
-Dia 4 — Celular.
-Inserir SIM, configurar APN, primeiro POST para o backend. Tratar falha: 1 retry, se falhar voltar para sleep.
+Dia 4 — Wi-Fi.
+Configurar SSID e senha da rede 2.4GHz. Fazer primeiro POST para o backend usando WiFi, HTTPClient e ArduinoJson. Tratar falha: 1 retry, se falhar voltar para sleep.
 
 Dia 5 — Backend.
 Testar end-to-end: firmware envia → backend recebe → coletor atualiza → WebSocket emite → frontend reflete.
@@ -120,11 +121,11 @@ O MVP será considerado aprovado se:
 
 ## Riscos e mitigações
 
-Rede celular instável no local do coletor.
-Mitigação: retry curto + SIM7000G faz fallback para 2G. Testar cobertura antes de instalar.
+Wi-Fi instável no local do coletor.
+Mitigação: retry curto, medir RSSI no ponto de instalação e usar hotspot/rede dedicada durante o teste se necessário.
 
 Consumo de bateria maior que o estimado.
-Mitigação: desligar modem logo após o POST. Se autonomia for curta, aumentar intervalo para 60 min. USB-C permite recarga sem abrir a caixa.
+Mitigação: encerrar Wi-Fi logo após o POST. Se autonomia for curta, aumentar intervalo para 60 min e revisar o circuito de alimentação/recarga.
 
 Cross-talk no acrílico.
 Mitigação: sensor encostado no acrílico + espuma preta. Se persistir, vedar com silicone direto sobre o sensor sem acrílico.

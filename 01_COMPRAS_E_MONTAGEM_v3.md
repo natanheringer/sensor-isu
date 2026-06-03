@@ -7,239 +7,212 @@ Fontes: BOM original (spec v1.0), pesquisa Thales (encapsulamento), pesquisa Mur
 
 ## A. COMPONENTES ELETRÔNICOS
 
-### 1. Placa principal — LilyGO TTGO T-SIM7000G
-
-| Campo | Detalhe |
-|-------|---------|
-| Modelo | LILYGO® TTGO T-SIM7000G ESP32-WROVER-B |
-| Revisão confirmada | V1.1 (verificar fotos do anúncio contra diagrama V1.1 antes de comprar) |
-| Chip principal | ESP32-WROVER-B (dual-core 240MHz, WiFi, Bluetooth, 8MB PSRAM) |
-| Modem | SIM7000G (2G GSM + NB-IoT + LTE Cat-M1 + GPS/GNSS) |
-| Chip serial USB | CH9102 |
-| Bateria | Holder 18650 integrado no PCB + circuito de carga USB-C + conector JST 2 pinos para painel solar |
-| SIM | Nano SIM exclusivamente (diagrama V1.1 explicita "Only Supports Nano SIM Card") |
-| Slot microSD | Sim (TF card via SPI) — não usaremos no MVP |
-| Tensão | 3.3V (regulador onboard) |
-| Dimensões da placa | ~100×32mm (com bateria: ~100×32×25mm) |
+### 1. Placa principal — ESP32 DOIT DevKit V1
+_________________________________________________________________________________________
+|         Campo        |                             Detalhe                            |
+|----------------------|----------------------------------------------------------------|
+|          Modelo      |                ESP DOIT DevKit V1 / ESP32 DevKit V1            |
+| Placa no Arduino IDE |                         ESP32 Dev Module                       |
+|    Chip principal    |         ESP32-WROOM-32 (dual-core 240MHz, Wi-Fi, Bluetooth)    |
+|   Comunicação do MVP |                    Wi-Fi via rede local                        |
+|      USB serial      | Micro-USB (chip CP2102 ou CH340, conforme fabricante do clone) |
+|        Bateria       | 18650 externa com módulo carregador/regulador adequado         |
+|       Tensão         |                    3.3V (regulador onboard)                    |
+|   Dimensões da placa |                           ~55×28mm                             |
+|   Link Mercado Livre | https://www.mercadolivre.com.br/esp32-doit-devkit-com-esp32-wroom-32-kit-2-unidades-original/p/MLB2077865835 |
+|______________________|________________________________________________________________|
 
 **Preço e onde comprar:**
-
-| Loja | Preço | Prazo | Link |
-|------|-------|-------|------|
-| LILYGO oficial | US$ 35,14 | DHL/FedEx 7-10 dias, Standard 10-25 dias | https://lilygo.cc/products/t-sim7000g |
-| LILYGO no Tindie | US$ 34,62 | Variável | https://www.tindie.com/products/lilygo/lilygo-ttgo-t-sim7000g-sim-development-board/ |
-| AliExpress (revendedores) | US$ 18-25 | 15-30 dias | https://www.aliexpress.com/item/1005003223833108.html |
-
-Repositório oficial: https://github.com/Xinyuan-LilyGO/LilyGO-T-SIM7000G
-
-**Diagrama de pinagem V1.1:**
-https://github.com/Xinyuan-LilyGO/LilyGO-T-SIM7000G/raw/master/Historical/SIM7000G_20200415/pins.jpg
+__________________________________________________________________________________________________
+|            Loja              |   Preço  |   Prazo    |                   Link                  |
+|------------------------------|----------|------------|-----------------------------------------|
+| Mercado Livre / lojas locais | R$ 35-70 | 1-7 dias   |      Buscar "ESP32 DOIT DevKit V1"      |
+| AliExpress (revendedores)    | US$ 3-7  | 15-30 dias | Buscar "ESP32 DevKit V1 ESP32-WROOM-32" |
+|______________________________|__________|____________|_________________________________________|
 
 **Pinagem que vamos usar no MVP:**
-
-| Função | GPIO | Observação |
-|--------|------|------------|
-| I2C SDA | 21 | Wire_SDA (rotulado no diagrama V1.1) |
-| I2C SCL | 22 | Wire_SCL (rotulado no diagrama V1.1) |
-| ToF1 XSHUT | 13 | Conflita com microSD CS — não usar microSD no MVP |
-| ToF2 XSHUT | 14 | Conflita com microSD SCLK — não usar microSD no MVP |
-| ToF3 XSHUT | 15 | Conflita com microSD MOSI — não usar microSD no MVP |
-| MPU6050 INT | 2 | Conflita com microSD MISO — não usar microSD no MVP |
-| Bateria ADC | 35 | Divisor resistivo 100k/100k (já na placa) |
-
-**Pinos ocupados pelo modem (não compartilhar):**
-
-| Função | GPIO |
-|--------|------|
-| Modem TX | 26 |
-| Modem RX | 27 |
-| Modem POWER | 4 |
-| Serial debug TX | 1 |
-| Serial debug RX | 3 |
+___________________________________________________________________________
+|    Função   | GPIO |                       Observação                   |
+|-------------|------|----------------------------------------------------|
+|    I2C SDA  |  21  |      Barramento comum dos 3 VL53L0X e MPU6050      |
+|    I2C SCL  |  19  |      Barramento comum dos 3 VL53L0X e MPU6050      |
+|  ToF1 XSHUT |  25  |  Controle para inicializar endereço I2C individual |
+|  ToF2 XSHUT |  26  |  Controle para inicializar endereço I2C individual |
+|  ToF3 XSHUT |  27  |  Controle para inicializar endereço I2C individual |
+| MPU6050 INT |  33  |          Interrupção de movimento / wake           |
+| Bateria ADC |  34  |  Entrada analógica; usar divisor resistivo externo |
+|_________________________________________________________________________|
 
 **Pinos livres alternativos (caso mude o desenho no futuro):**
-
-| GPIO | Tipo | Observação (diagrama V1.1) |
-|------|------|---------------------------|
-| 32 | Digital | Livre |
-| 33 | Digital | Livre |
-| 34 | Digital (entrada) | Livre |
-| 39 | ADC (entrada) | Livre, útil para leitura analógica |
-| 23, 19, 18 | VSPI | Livre para SPI dedicado se necessário |
-
-**Decisão documentada:** no MVP, os GPIOs 2, 13, 14, 15 são usados para sensores (XSHUT e INT). Isso impede o uso simultâneo do slot microSD. Se no futuro precisarmos de datalog local (buffer em SD quando sem rede), será necessário remapear os pinos dos sensores para 32, 33, 34 ou usar multiplexador I2C.
+___________________________________________________________________________
+|       GPIO       |     Tipo    |               Observação               |
+|------------------|-------------|----------------------------------------|
+|        32        | Digital/ADC |                Livre                   |
+|        35        | Entrada/ADC |            Livre, somente entrada      |
+|       36, 39     | Entrada/ADC |          Livres, somente entrada       |
+|     23, 19, 18   |     VSPI    | Livres para expansão SPI se necessário |
+|_________________________________________________________________________|
 
 **Notas importantes:**
-- Conferir que o anúncio é revisão V1.1 comparando fotos com o diagrama oficial antes de finalizar a compra.
-- O SIM7000G não suporta 4G convencional. Opera em 2G (GSM/GPRS) e NB-IoT/LTE Cat-M1.
-- Antena IPEX LTE/GPS normalmente inclusa na compra.
+- No Arduino IDE, selecionar a placa **ESP32 Dev Module**.
+- O MVP usa Wi-Fi 2.4GHz e não depende de rede móvel.
+- GPIO34 é somente entrada, por isso é adequado para leitura de bateria via ADC e não deve ser usado como saída.
 
 ---
 
 ### 2. Sensor de distância — VL53L0X (×3 unidades)
-
-| Campo | Detalhe |
-|-------|---------|
-| Modelo do módulo | GY-VL53L0XV2 |
-| Chip | ST VL53L0X (Time-of-Flight laser 940nm) |
-| Interface | I2C (endereço padrão 0x29, alterável via XSHUT) |
-| Tensão | 3.3V - 5V (regulador onboard no breakout) |
-| Pino XSHUT | Sim, presente no breakout GY-VL53L0XV2 |
-| Dimensões do módulo | ~13×18mm |
-| Quantidade | 3 |
-| Preço por unidade | ~R$ 10-15 |
-| Custo total | ~R$ 30-45 |
-| Link AliExpress | https://pt.aliexpress.com/item/1005003354879961.html |
+_______________________________________________________________________________________
+|          Campo          |                           Detalhe                         |
+|-------------------------|-----------------------------------------------------------|
+|     Modelo do módulo    |                       GY-VL53L0XV2                        |
+|           Chip          |          ST VL53L0X (Time-of-Flight laser 940nm)          |
+|        Interface        |       I2C (endereço padrão 0x29, alterável via XSHUT)     |
+|          Tensão         |              3.3V - 5V (regulador no breakout)            |
+|        Pino XSHUT       |             Sim, presente no breakout GY-VL53L0XV2        |
+|  Dimensões do módulo    |                         ~13×18mm                          |
+|        Quantidade       |                             3                             |
+|    Preço por unidade    |                        ~R$ 10-15                          |
+|       Custo total       |                        ~R$ 30-45                          |
+|      Link mercado livre | https://www.mercadolivre.com.br/sensor-de-distancia-laser-vl53l0x-timeofflight-gyvl53/up/MLBU1981964723            |                                                           |
+|_________________________|___________________________________________________________|
 
 **Alcance real por tipo de superfície:**
-
-| Superfície | Alcance estimado |
-|------------|-----------------|
-| Alvo branco/claro | 1800-2000mm |
-| Metal cinza/alumínio | 1200-1500mm |
-| Plástico preto (gabinete) | 800-1200mm |
-| Superfície muito escura ou angulada | ~600mm |
+____________________________________________________________
+|              Superfície              | Alcance estimado |
+|--------------------------------------|------------------|
+|          Alvo branco/claro           |   1800-2000mm    |
+|         Metal cinza/alumínio         |   1200-1500mm    |
+|       Plástico preto (gabinete)      |    800-1200mm    |
+| Superfície muito escura ou angulada  |      ~600mm      |
+|______________________________________|__________________|
 
 Precisão: ±3% em condições boas, até ±10% em condições ruins.
 
 ---
 
 ### 3. Acelerômetro — MPU6050 (×1 unidade)
-
-| Campo | Detalhe |
-|-------|---------|
-| Modelo do módulo | GY-521 |
-| Chip | InvenSense MPU6050 (acelerômetro + giroscópio 6 eixos) |
-| Interface | I2C (endereço 0x68 — não conflita com VL53L0X) |
-| Tensão | 3.3V - 5V |
-| Função | Wake-on-impact (detectar descarte no coletor) |
-| Threshold recomendado | 40-80mg (calibrar em teste real) |
-| Pino INT | Sim, disponível no breakout GY-521 |
-| Conexão wake | INT → GPIO2 (suporta ext0 wakeup deep sleep) |
-| Dimensões | ~20×16mm |
-| Preço | ~R$ 10-15 |
-| Link AliExpress | https://pt.aliexpress.com/item/1005003340292792.html |
+________________________________________________________________________________
+|          Campo          |                         Detalhe                     |
+|-------------------------|-----------------------------------------------------|
+|     Modelo do módulo    |                         GY-521                      |
+|           Chip          | InvenSense MPU6050 (acelerômetro + giroscópio)      |
+|        Interface        |       I2C (endereço 0x68, não conflita com VL53L0X) |
+|          Tensão         |                       3.3V - 5V                     |
+|          Função         |       Wake-on-impact (detectar descarte no coletor) |
+| Threshold recomendado   |             40-80mg (calibrar em teste real)        |
+|         Pino INT        |              Sim, disponível no breakout GY-521     |
+|      Conexão wake       |                       INT → GPIO33                  |
+|        Dimensões        |                         ~20×16mm                    |
+|          Preço          |                        ~R$ 10-15                    |
+|     Link mercado livre  | https://www.mercadolivre.com.br/mpu6050-gy521-modulo-sensor-acelerometro-e-giroscopio-gy521/up/MLBU1963901751?pdp_filters=item_id:MLB1922679958                                |
+|_________________________|_____________________________________________________|
 
 ---
 
 ### 4. Bateria 18650 Li-Ion (×1 unidade)
+_________________________________________________________________________________
+|        Campo        |                         Detalhe                         |
+|---------------------|---------------------------------------------------------|
+|         Tipo        |                18650 Li-Ion recarregável                |
+|     Capacidade      |            Mínimo 2600mAh, recomendado 3000mAh          |
+|        Tensão       |            3.7V nominal (4.2V cheio, 3.0V corte)        |
+| Modelos confiáveis  |            Samsung 30Q, LG HG2, Panasonic NCR18650B     |
+|        Preço        |                         R$ 25-40                        |
+|         Onde        | Mercado Livre — buscar "bateria 18650 3000mAh original" |
+|_____________________|_________________________________________________________|
 
-| Campo | Detalhe |
-|-------|---------|
-| Tipo | 18650 Li-Ion recarregável |
-| Capacidade | Mínimo 2600mAh, recomendado 3000mAh |
-| Tensão | 3.7V nominal (4.2V cheio, 3.0V corte) |
-| Modelos confiáveis | Samsung 30Q, LG HG2, Panasonic NCR18650B |
-| Preço | R$ 25-40 |
-| Onde | Mercado Livre — buscar "bateria 18650 3000mAh original" |
-
-Holder não precisa (já integrado na placa). Autonomia estimada: 6-8 semanas com ciclo de 30 min.
+Usar holder 18650 externo e módulo de carga/regulação compatível com ESP32. Autonomia estimada será validada no MVP com ciclo de 30 min.
 
 ---
 
 ## B. CONECTIVIDADE
 
-### 5. Chip de celular M2M
-
-| Campo | Detalhe |
-|-------|---------|
-| Tipo de SIM | Nano SIM (4FF) — único formato aceito pela placa |
-| Tecnologia | 2G (GPRS) ou NB-IoT/LTE Cat-M1 |
-| Consumo estimado | ~1.5KB/transmissão × 48/dia = ~72KB/dia = ~2.2MB/mês |
-
-**Operadoras pesquisadas (Murilo + complementar):**
-
-| Operadora | Franquia | Preço mensal | APN | Tecnologias | Contratação | Fonte |
-|-----------|----------|-------------|-----|-------------|-------------|-------|
-| Vivo M2M | 20MB | R$ 6,90 | APN privado (definido no contrato) ou zap.vivo.com.br (chip comum) | 2G, LTE-M, NB-IoT | Portal empresas (pode exigir CNPJ) | Pesquisa Murilo |
-| Vivo M2M | 50MB | R$ 9,90 | Idem | Idem | Idem | Pesquisa Murilo |
-| Vivo M2M | 100MB | R$ 11,90 | Idem | Idem | Idem | Pesquisa Murilo |
-| Claro M2M (com gestão) | 2MB | R$ 20,50 | APN pública específica Cat-M (pedir à operadora) | 2G, LTE-M | Portal empresas, permanência 24 meses | Pesquisa Murilo |
-| Claro M2M (com gestão) | 20MB | R$ 22,50 | Idem | Idem | Idem | Pesquisa Murilo |
-| Datatem (MVNO) | 20MB | ~R$ 7-12 | APN privada (fornecida na ativação) | Multioperadora (Vivo/Claro/TIM) | Sem CNPJ para teste, entrega 72h | Pesquisa complementar |
-| emnify (MVNO) | Pay-per-use | ~US$ 0.50/mês | Fornecida no painel | NB-IoT, LTE-M, 2G | Chip teste grátis 60 dias, ativa online | Pesquisa complementar |
-| 1NCE | 500MB total | US$ 14 único | iot.1nce.net | NB-IoT, LTE-M, 2G | Pagamento único, sem mensalidade, 10 anos | Pesquisa complementar |
-
-**Pontos levantados pelo Murilo que afetam a decisão:**
-
-1. O APN de chip M2M corporativo não é o mesmo do celular comum. A Vivo tem APN privado definido no contrato, a Claro tem APNs específicas para Cat-M. A pergunta certa para o comercial da operadora é: "meu chip é APN pública padrão ou APN dedicada? qual o APN exato + usuário/senha + tipo de autenticação?"
-
-2. Ter 4G na cidade não garante NB-IoT ou Cat-M no ponto do coletor. Antes de escolher operadora, verificar cobertura IoT no endereço exato usando os mapas:
-   - Vivo: https://mapadecobertura.vivo.com.br/ (alternar camada IOT/NBIOT/CATM)
-   - Claro: https://www.claro.com.br/faq/internet-residencial/mapa-de-cobertura-lot
-
-3. A validação mais rápida é um teste de bancada de 30 minutos com chip ativo e APN confirmado. O que esse teste valida não é o ESP32, é rede + APN + modem funcionando juntos.
+### 5. Wi-Fi do MVP
+_________________________________________________________________________________
+|        Campo        |                              Detalhe                    |
+|---------------------|---------------------------------------------------------|
+|      Tecnologia     |                       Wi-Fi 2.4GHz do ESP32             |
+|     Bibliotecas     |                  WiFi, HTTPClient, ArduinoJson          |
+|    Configuração     |      SSID e senha no firmware ou configuração local     |
+| Consumo estimado    | Reduzir com ciclo curto de conexão, POST e deep sleep   |
+|_____________________|_________________________________________________________|
 
 **Recomendação para MVP:**
-- Mais rápido para protótipo: emnify (grátis 60 dias, ativa online, sem burocracia)
-- Mais barato longo prazo: Vivo 20MB a R$ 6,90/mês (se tiver CNPJ) ou 1NCE US$14 único
-- A Claro é significativamente mais cara e com permanência de 24 meses — não recomendada para MVP acadêmico
+- Usar uma rede Wi-Fi conhecida no local de teste ou hotspot durante a validação em campo.
+- Validar RSSI no ponto real do coletor antes de fechar a caixa.
+- O firmware deve conectar ao Wi-Fi, fazer o POST HTTP, encerrar a conexão e voltar ao deep sleep.
 
 ---
 
 ## C. ENCAPSULAMENTO E MECÂNICA (pesquisa Thales)
 
 ### 6. Caixa IP65 policarbonato transparente
-
-| Campo | Detalhe |
-|-------|---------|
-| Material | Policarbonato transparente |
-| Classificação | IP65 |
-| Dimensões sugeridas | ~130×80×70mm |
-| Link | https://share.google/GBH64IcwtCDfZq9R1 |
-| Preço | R$ 25-35 |
+__________________________________________________________________
+|        Campo        |                  Detalhe                 |
+|---------------------|------------------------------------------|
+|       Material      |          Policarbonato transparente      |
+|    Classificação    |                   IP65                   |
+| Dimensões sugeridas |               ~130×80×70mm               |
+|         Link        | https://share.google/GBH64IcwtCDfZq9R1   |
+|        Preço        |                 R$ 25-35                 |
+|_____________________|__________________________________________|
 
 ### 7. Prensa-cabos PG7 IP68 (×2)
-
-| Campo | Detalhe |
-|-------|---------|
-| Função | Passagem vedada para antena e USB-C |
-| Quantidade | 2 |
-| Link | https://share.google/oo6GZiZgthNs3Uo2F |
-| Preço | R$ 8-12 (par) |
+_______________________________________________________________
+|     Campo    |                    Detalhe                   |
+|--------------|----------------------------------------------|
+|    Função    |    Passagem vedada para cabo de energia      |
+|  Quantidade  |                       2                      |
+|     Link     | https://share.google/oo6GZiZgthNs3Uo2F       |
+|    Preço     |                 R$ 8-12 (par)                |
+|______________|______________________________________________|
 
 ### 8. Silicone RTV neutro
-
-| Campo | Detalhe |
-|-------|---------|
-| Tipo | Neutro (incolor ou branco — nunca ácido) |
-| Uso | Vedação das janelas de acrílico dos ToF |
-| Link | https://produto.mercadolivre.com.br/MLB-3790058230 |
-| Alternativa | Qualquer silicone RTV neutro de ferragem |
-| Preço | R$ 15-20 |
+________________________________________________________________________
+|      Campo      |                         Detalhe                    |
+|-----------------|----------------------------------------------------|
+|       Tipo      |          Neutro (incolor ou branco, nunca ácido)   |
+|        Uso      |          Vedação das janelas de acrílico dos ToF   |
+|       Link      | https://produto.mercadolivre.com.br/MLB-3790058230 |
+|   Alternativa   |          Qualquer silicone RTV neutro de ferragem  |
+|      Preço      |                         R$ 15-20                   |
+|_________________|____________________________________________________|
 
 ### 9. Acrílico cristal PMMA 2mm
-
-| Campo | Detalhe |
-|-------|---------|
-| Material | PMMA cristal transparente |
-| Espessura | 2mm |
-| Transmitância em 940nm | ~92% (confirmado) |
-| Corte necessário | 3 discos de ~10mm |
-| Link | Mercado Livre — "chapa acrílico transparente cristal 20x30cm 2mm" |
-| Preço | R$ 10-15 (chapa 20×30cm) |
+___________________________________________________________________________________
+|          Campo          |                         Detalhe                       |
+|-------------------------|-------------------------------------------------------|
+|         Material        |                 PMMA cristal transparente             |
+|        Espessura        |                           2mm                         |
+|  Transmitância em 940nm |                    ~92% (confirmado)                  |
+|    Corte necessário     |                    3 discos de ~10mm                  |
+|           Link          | Mercado Livre — "chapa acrílico cristal 20x30cm 2mm"  |
+|          Preço          |                  R$ 10-15 (chapa 20×30cm)             |
+|_________________________|_______________________________________________________|
 
 **Cross-talk (alerta Thales):** encostar o acrílico no sensor e/ou usar o-ring ou espuma preta isolando emissor e receptor.
 
 ### 10. Fixação
-
-| Item | Detalhe | Preço |
-|------|---------|-------|
-| Parafusos inox M3×10mm + porca (20un) | Link Thales: Mercado Livre | ~R$ 10 |
-| Espaçadores nylon M3 | Ferragem ou loja de eletrônica | ~R$ 5 |
-| Zip ties industriais pretos (UV) | https://a.co/d/0dP30Ao9 | ~R$ 10-15 |
+__________________________________________________________________________________________
+|                  Item                  |              Detalhe              |   Preço   |
+|----------------------------------------|-----------------------------------|-----------|
+| Parafusos inox M3×10mm + porca (20un)  |      Link Thales: Mercado Livre   |  ~R$ 10   |
+|          Espaçadores nylon M3          |    Ferragem ou loja de eletrônica |  ~R$ 5    |
+|      Zip ties industriais pretos       |       https://a.co/d/0dP30Ao9     | ~R$ 10-15 |
+|________________________________________|___________________________________|___________|
 
 Fixação por material do coletor: metal → inox M3 ou Araldite; plástico/PVC → zip ties UV; madeira → soberbos.
 
 ### 11. Fios, conectores e acessórios
-
-| Item | Detalhe | Preço |
-|------|---------|-------|
-| Fios jumper Dupont F-F 20cm | Pacote 20+ | ~R$ 8 |
-| Fios silicone AWG26 | 1m por cor | ~R$ 10 |
-| Conectores JST-PH 2.0mm 4 pinos | Conexões removíveis | ~R$ 8 |
-| Cabo USB-C curto 30cm | Carga/serviço | ~R$ 10 |
-| Cap borracha USB-C | "USB-C dust plug silicone" | ~R$ 5 |
+___________________________________________________________________________________
+|                Item                |              Detalhe             |  Preço  |
+|------------------------------------|----------------------------------|---------|
+|     Fios jumper Dupont F-F 20cm    |             Pacote 20+           |  ~R$ 8  |
+|          Fios silicone AWG26       |             1m por cor           | ~R$ 10  |
+| Conectores JST-PH 2.0mm 4 pinos    |        Conexões removíveis       |  ~R$ 8  |
+|      Cabo micro-USB curto 30cm     |           Carga/serviço          | ~R$ 10  |
+|       Cap borracha micro-USB       | "micro USB dust plug silicone"   |  ~R$ 5  |
+|____________________________________|__________________________________|_________|
 
 ---
 
@@ -247,26 +220,26 @@ Fixação por material do coletor: metal → inox M3 ou Araldite; plástico/PVC 
 
 | Categoria | Custo estimado |
 |-----------|---------------|
-| Eletrônicos (LilyGO loja oficial + 3×VL53L0X + MPU6050 + bateria) | R$ 260-310 |
-| Eletrônicos (LilyGO AliExpress + 3×VL53L0X + MPU6050 + bateria) | R$ 185-225 |
-| Conectividade (chip M2M primeiro período) | R$ 0-80 |
+| Eletrônicos (ESP32 DevKit V1 + 3×VL53L0X + MPU6050 + bateria + módulo de carga/regulação) | R$ 125-210 |
+| Conectividade Wi-Fi | R$ 0 |
 | Encapsulamento (caixa + prensa-cabos + silicone + acrílico + fixação) | R$ 70-95 |
 | Acessórios (fios + conectores + USB + zip ties) | R$ 40-55 |
-| **TOTAL (loja oficial)** | **R$ 370-540** |
-| **TOTAL (AliExpress)** | **R$ 295-455** |
+| **TOTAL estimado** | **R$ 235-360** |
 
 ---
 
 ## E. PRIORIDADE DE COMPRA
 
 **Pedido 1 — AliExpress ou loja oficial (fazer agora):**
-- 1× LilyGO T-SIM7000G (conferir revisão V1.1 nas fotos antes de finalizar)
+- 1× ESP32 DOIT DevKit V1 / ESP32 DevKit V1
 - 3× VL53L0X GY-VL53L0XV2
 - 1× MPU6050 GY-521
 - 1× Kit fios jumper Dupont
 
 **Pedido 2 — Mercado Livre / lojas locais (pode esperar 1 semana):**
 - 1× Bateria 18650 3000mAh
+- 1× Holder 18650
+- 1× Módulo de carga/regulação adequado para alimentar ESP32
 - 1× Caixa IP65 policarbonato
 - 2× Prensa-cabo PG7
 - 1× Silicone RTV neutro
@@ -274,10 +247,9 @@ Fixação por material do coletor: metal → inox M3 ou Araldite; plástico/PVC 
 - Parafusos M3 inox + espaçadores nylon
 - Zip ties industriais
 
-**Pedido 3 — Chip celular (quando a placa chegar):**
-- Solicitar chip emnify (grátis 60 dias) para protótipo
-- Antes de ativar: verificar cobertura IoT no endereço do coletor via mapas das operadoras
-- Ao receber o chip: confirmar APN exato com a operadora antes de configurar no firmware
+**Pedido 3 — Rede de teste:**
+- Separar SSID e senha de uma rede Wi-Fi 2.4GHz para bancada.
+- Para campo, confirmar se haverá Wi-Fi no local ou hotspot dedicado durante o teste.
 
 ---
 
@@ -285,11 +257,13 @@ Fixação por material do coletor: metal → inox M3 ou Araldite; plástico/PVC 
 
 ### Etapa 1 — Teste individual em bancada
 
-Conectar a LilyGO no computador via USB-C. Instalar driver CH9102 se necessário. Verificar que a placa aparece como porta COM.
+Conectar o ESP32 DOIT DevKit V1 no computador via micro-USB. Instalar driver CP2102 ou CH340 se necessário. Verificar que a placa aparece como porta COM.
 
-Instalar bibliotecas no Arduino IDE: TinyGSM, ArduinoJson, Adafruit VL53L0X, Adafruit MPU6050, Adafruit Unified Sensor.
+No Arduino IDE, selecionar **ESP32 Dev Module**.
 
-Conectar 1 VL53L0X no I2C (SDA=21, SCL=22, VIN=3.3V, GND=GND). Rodar exemplo da biblioteca. Apontar para a mesa e verificar distância.
+Instalar bibliotecas no Arduino IDE: WiFi, HTTPClient, ArduinoJson, Adafruit VL53L0X, Adafruit MPU6050, Adafruit Unified Sensor. WiFi e HTTPClient vêm do core ESP32.
+
+Conectar 1 VL53L0X no I2C (SDA=21, SCL=19, VIN=3.3V, GND=GND). Rodar exemplo da biblioteca. Apontar para a mesa e verificar distância.
 
 Conectar o MPU6050 no I2C. Rodar exemplo. Sacudir e ver os valores mudarem.
 
@@ -297,9 +271,7 @@ Inserir bateria 18650. Verificar LED de carga (vermelho = carregando, verde = ch
 
 ### Etapa 2 — Multi-ToF com XSHUT
 
-Conectar os 3 VL53L0X em paralelo no I2C (compartilham SDA e SCL). Conectar XSHUT: ToF1→GPIO13, ToF2→GPIO14, ToF3→GPIO15.
-
-Nota: esses GPIOs são compartilhados com o slot microSD. Não inserir cartão microSD enquanto os sensores estiverem conectados.
+Conectar os 3 VL53L0X em paralelo no I2C (compartilham SDA e SCL). Conectar XSHUT: ToF1→GPIO25, ToF2→GPIO26, ToF3→GPIO27.
 
 Inicialização sequencial no firmware:
 1. Puxar todos XSHUT para LOW (desliga todos)
@@ -311,22 +283,22 @@ Ler os 3 sensores. Colocar objetos a distâncias conhecidas e validar.
 
 ### Etapa 3 — Deep sleep e wake
 
-Conectar INT do MPU6050 ao GPIO2 do ESP32. (Também compartilhado com microSD MISO — não usar microSD.)
+Conectar INT do MPU6050 ao GPIO33 do ESP32.
 
 Configurar Motion Detection Interrupt com threshold ~50mg.
 
 No firmware:
 - esp_sleep_enable_timer_wakeup(30 min em µs)
-- esp_sleep_enable_ext0_wakeup(GPIO2, HIGH)
+- esp_sleep_enable_ext0_wakeup(GPIO33, HIGH)
 - esp_deep_sleep_start()
 
 Verificar no Serial Monitor: acorda por timer e por impacto (bater na mesa).
 
-### Etapa 4 — Conexão celular
+### Etapa 4 — Conexão Wi-Fi
 
-Inserir nano SIM no slot (placa desligada). Configurar APN no firmware conforme operadora (APN confirmado com a operadora, não APN genérico).
+Configurar SSID e senha da rede Wi-Fi 2.4GHz no firmware.
 
-O teste de bancada mais importante do projeto: ligar modem, conectar GPRS/NB-IoT, fazer POST para o backend. Se isso funcionar, o gargalo real está resolvido.
+O teste de bancada mais importante do projeto: conectar ao Wi-Fi, fazer POST HTTP para o backend e voltar ao deep sleep. Se isso funcionar, a integração do dispositivo com a dashboard está validada para o MVP.
 
 ### Etapa 5 — Montagem na caixa
 
@@ -336,9 +308,9 @@ Colar discos de acrílico 2mm por fora com silicone RTV. Esperar 24h de cura.
 
 Montar VL53L0X por dentro, encostados no acrílico. Se houver cross-talk, adicionar espuma preta.
 
-Fixar LilyGO com espaçadores nylon M3. Fixar MPU6050 em contato rígido com a parede da caixa.
+Fixar ESP32 DevKit V1 com espaçadores nylon M3. Fixar MPU6050 em contato rígido com a parede da caixa.
 
-Passar antena e cabo USB pelos prensa-cabos PG7. Apertar.
+Passar cabo USB ou extensão de carga/serviço pelos prensa-cabos PG7 se necessário. Apertar.
 
 Fechar caixa. Testar vedação com borrifo de água.
 
@@ -346,4 +318,4 @@ Fechar caixa. Testar vedação com borrifo de água.
 
 Fixar caixa na parte superior interna do coletor, sensores ToF apontando para baixo. Método conforme material (seção 10).
 
-Antes de instalar: verificar cobertura celular no local com celular pessoal (mesma operadora do chip M2M).
+Antes de instalar: verificar sinal Wi-Fi no local exato do coletor.
